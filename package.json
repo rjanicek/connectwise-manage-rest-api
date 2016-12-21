@@ -1,6 +1,15 @@
 {
-  "name": "connectwise-rest-api",
+  "name": "connectwise-manage-rest-api",
   "version": "1.0.0",
+  "description": "A lightweight interface that preserves the syntax but removes as much boiler plate code as possible for using the ConnectWise REST API's.",
+  "author": "Richard Janicek <r@janicek.co> (http://www.janicek.co)",
+  "license": "MIT",
+  "homepage": "https://github.com/rjanicek/connectwise-manage-rest-api",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rjanicek/connectwise-manage-rest-api"
+  },
+  "main": "index.js",
   "dependencies": {
     "fast-json-patch": "1.1.3",
     "fetch-ponyfill": "3.0.2",

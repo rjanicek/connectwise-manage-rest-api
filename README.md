@@ -1,17 +1,24 @@
-ConnectWise REST API
-====================
+ConnectWise Manage REST API
+===========================
 
-A lightweight interface for the ConnectWise REST API.
+A lightweight interface that preserves the syntax but removes as much boiler plate code as possible for using the ConnectWise REST API's.
 
 api documentation
 -----------------
 https://developer.connectwise.com/REST_Documentation
 
+features
+--------
+* uses promises
+* automatic API version lookup with option to specify specific version
+* option to retry in case of timeout
+* works in browser and node.js
+
 usage
 -----
 ```JavaScript
 
-const psa = require ('connectwise-rest-api')({
+const psa = require ('connectwise-manage-rest-api')({
 	fqdn: 'idev.connectwisedev.com',
 	companyId: 'idev',
 	publicKey: '################',
@@ -35,5 +42,5 @@ see [test.js](./test.js) for more examples
 install
 -------
 ```
-npm install --save connectwise-rest-api
+npm install --save connectwise-manage-rest-api
 ```
