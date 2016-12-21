@@ -19,8 +19,8 @@ usage
 ```JavaScript
 
 const psa = require ('connectwise-manage-rest-api')({
-	fqdn: 'idev.connectwisedev.com',
-	companyId: 'idev',
+	fqdn: '​api-na.myconnectwise.net',
+	companyId: '################',
 	publicKey: '################',
 	privateKey: '################',
 
