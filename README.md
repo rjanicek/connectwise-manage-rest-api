@@ -19,7 +19,7 @@ usage
 -----
 ```JavaScript
 
-const psa = require ('connectwise-manage-rest-api')({
+const manage = require ('connectwise-manage-rest-api')({
 	fqdn: '​api-na.myconnectwise.net',
 	companyId: '################',
 	publicKey: '################',
@@ -30,27 +30,30 @@ const psa = require ('connectwise-manage-rest-api')({
 	timeoutRetries: 10         // number of times to retry request in case of timeout error
 });
 
-psa.get(`system/info`)
-	.then(resultGraph => {
-		console.log(resultGraph);
-	}).catch(error => {
-		console.log(error);
-	});
+(async () => {
+    const resultGraph = await manage.get(`system/info`);
+	console.log(resultGraph);
+}).catch(error => {
+    console.log(error);
+})();
+
 ```
 
 see [test.js](./test.js) for more examples
 
 ### system report normalizer
 ```JavaScript
-const psa = require ('connectwise-manage-rest-api')({...});
-const normalize = require('connectwise-manage-rest-api/normalize-system-report');
+const config = require('./test-config');
+const log = x => console.log(require('util').inspect(x, {colors: true, depth: null}));
+const normalize = require('./normalize-system-report');
+const manage = require ('./index')(config);
 
-psa.get('system/reports/holiday')
-    .then(holidayReportInColumnarFormat => {
-        const holidayDataInSaneObjectFormat = normalize(holidayReportInColumnarFormat);
-        log(holidayDataInSaneObjectFormat);
-    })
-    .catch(log);
+(async () => {
+    const holidayReportInColumnarFormat = await manage.get('system/reports/holiday');
+    const holidayDataInSaneObjectFormat = normalize(holidayReportInColumnarFormat);
+    log(holidayReportInColumnarFormat);
+    log(holidayDataInSaneObjectFormat);
+})().catch(log);    
 ```
 transforms this
 ```JavaScript
@@ -114,5 +117,5 @@ into this
 install
 -------
 ```
-npm install --save connectwise-manage-rest-api
+npm install connectwise-manage-rest-api
 ```

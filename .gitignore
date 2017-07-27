@@ -1,4 +1,5 @@
 # node
-npm-debug.log
-node_modules
 /test-config-private.js
+node_modules
+npm-debug.log
+package-lock.json

@@ -1,108 +1,103 @@
-/* jshint 
-    browser: true, jquery: true, node: true,
-    bitwise: true, camelcase: false, curly: true, eqeqeq: true, esversion: 6, evil: true, expr: true, forin: true, immed: true, indent: 4, latedef: true, multistr: true, newcap: true, noarg: true, noempty: true, nonew: true, quotmark: single, regexdash: true, strict: true, sub: true, trailing: true, undef: true, unused: vars, white: true
-*/
+/* eslint no-empty: "off" */
 
 'use strict';
 
-const fetchIt = require('fetch-ponyfill')().fetch;
-const promiseRetry = require('promise-retry');
+const {fetch} = require('fetch-ponyfill')();
 const psaCodebaseVersion = require('./psa-codebase-version');
 
 module.exports = cwRestApiConfiguration => {
-	const AUTHORIZATION_HEADER = 'Basic ' + new Buffer(`${cwRestApiConfiguration.companyId}+${cwRestApiConfiguration.publicKey}:${cwRestApiConfiguration.privateKey}`).toString('base64');
-	const apiUrl = version => `https://${cwRestApiConfiguration.fqdn}/${version}/apis/3.0/`;
-	let cachedApiUrl;
+    const AUTHORIZATION_HEADER = 'Basic ' + new Buffer(`${cwRestApiConfiguration.companyId}+${cwRestApiConfiguration.publicKey}:${cwRestApiConfiguration.privateKey}`).toString('base64');
+    const apiUrl = version => `https://${cwRestApiConfiguration.fqdn}/${version}/apis/3.0/`;
 
-	function fetchRequest(options) {
+    let promiseToGetApiUrl;
+    const makePromiseToGetApiUrl = (async () => {
+        // configured api version url
+        if (cwRestApiConfiguration.version) {
+            return apiUrl(cwRestApiConfiguration.version);
+        }
 
-		let requestOptions = {
-			method: options.method || 'GET',
-			headers: {
-		    	'x-forwarded-proto': 'https',
-		    	Authorization: AUTHORIZATION_HEADER,
-		    	'Content-Type': 'application/json'
-		  	}
-		};
+        // fetched api version url
+        const version = await psaCodebaseVersion(cwRestApiConfiguration.fqdn, cwRestApiConfiguration.companyId);
+        return apiUrl(version);
+    });
 
-	  	if (options.body) {
-	  		requestOptions.body = options.body;
-			if (typeof requestOptions.body === 'object') {
-				requestOptions.body = JSON.stringify(requestOptions.body);
-			}
-	  	}
+    async function fetchRequest(options) {
 
-		const promiseToGetApiUrl = (() => {
-			// cached api url
-			if (cachedApiUrl) {
-				return Promise.resolve(cachedApiUrl);
-			}
+        if (!promiseToGetApiUrl) {
+            promiseToGetApiUrl = makePromiseToGetApiUrl();
+        }
 
-			// configured api version url
-			if (cwRestApiConfiguration.version) {
-				cachedApiUrl = apiUrl(cwRestApiConfiguration.version);
-				return Promise.resolve(cachedApiUrl);
-			}
+        let requestOptions = {
+            method: options.method || 'GET',
+            headers: {
+                'x-forwarded-proto': 'https',
+                Authorization: AUTHORIZATION_HEADER,
+                'Content-Type': 'application/json'
+            }
+        };
 
-			// fetched api version url
-			return psaCodebaseVersion(cwRestApiConfiguration.fqdn, cwRestApiConfiguration.companyId)
-				.then(version => {
-					cachedApiUrl = apiUrl(version);
-					return Promise.resolve(cachedApiUrl);
-				});
-		})();
+        if (options.body) {
+            requestOptions.body = options.body;
+            if (typeof requestOptions.body === 'object') {
+                requestOptions.body = JSON.stringify(requestOptions.body);
+            }
+        }
 
-		let error;
+        let error;
 
-		const promise = promiseToGetApiUrl
-			.then(restApiUrl => fetchIt(restApiUrl + options.endpoint, requestOptions))
-			.then(response => {
-				if (!response.ok) {
-					error = new Error(response.statusText);
-					error.response = response;
-			  	}
+        const makePromise = (async () => {
+            const restApiUrl = await promiseToGetApiUrl;
+            const response = await fetch(restApiUrl + options.endpoint, requestOptions);
 
-			  	if (response.status === 204) {	// 204 = No Content
-			  		return Promise.resolve();
-			  	}
+            if (!response.ok) {
+                error = new Error(response.statusText);
+                error.response = response;
+            }
 
-			  	return response.text();
-			}).then(responseText => {
-				let data;
+            if (response.status === 204) {	// 204 = No Content
+                return;
+            }
 
-				try {
-					data = JSON.parse(responseText);
-				} catch (e) {}
+            const responseText = await response.text();
 
-				if (typeof error !== 'undefined') {
-					error.responseBody = data || responseText;
-					throw error;
-				}
+            let data;
 
-				return Promise.resolve(data);
-			});
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {}
 
-		if (!cwRestApiConfiguration.timeoutRetries) {
-			return promise;
-		}
+            if (typeof error !== 'undefined') {
+                error.responseBody = data || responseText;
+                throw error;
+            }
 
-		return promiseRetry((retry, number) => {
-		    return promise.catch(error => {
-	        	if (error.response && error.response.status === 504) {	// 504 = GATEWAY_TIMEOUT
-		            retry(error);
-		        }
-		        throw error;
-		    });
-		}, {retries: cwRestApiConfiguration.timeoutRetries});
+            return data;
+        });
 
-	}
+        let lastError;
+        for (let retry = 1; retry <= (cwRestApiConfiguration.timeoutRetries || 1); retry++) {
+            try {
+                const promise = makePromise();
+                await promise;
+                return promise;
+            } catch (error) {
+                lastError = error;
+                if (error.response && error.response.status === 504) {	// 504 = GATEWAY_TIMEOUT
+                    continue;
+                }
+                throw error;                
+            }
+        }
+        throw lastError;
+        
+    }
 
-	return {
-		delete: endpoint => fetchRequest({method: 'DELETE', endpoint}),
-		get: 	endpoint => fetchRequest({method: 'GET', endpoint}),
-		patch: 	(endpoint, body) => fetchRequest({method: 'PATCH', endpoint, body}),
-		post: 	(endpoint, body) => fetchRequest({method: 'POST', endpoint, body}),
-		put: 	(endpoint, body) => fetchRequest({method: 'PUT', endpoint, body}),
-	};
+    return {
+        delete: endpoint => fetchRequest({method: 'DELETE', endpoint}),
+        get: 	endpoint => fetchRequest({method: 'GET', endpoint}),
+        patch: 	(endpoint, body) => fetchRequest({method: 'PATCH', endpoint, body}),
+        post: 	(endpoint, body) => fetchRequest({method: 'POST', endpoint, body}),
+        put: 	(endpoint, body) => fetchRequest({method: 'PUT', endpoint, body}),
+    };
 
 };

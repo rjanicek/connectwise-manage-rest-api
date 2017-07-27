@@ -1,37 +1,31 @@
-/* jshint 
-    browser: true, jquery: true, node: true,
-    bitwise: true, camelcase: false, curly: true, eqeqeq: true, esversion: 6, evil: true, expr: true, forin: true, immed: true, indent: 4, latedef: true, multistr: true, newcap: true, noarg: true, noempty: true, nonew: true, quotmark: single, regexdash: true, strict: true, sub: true, trailing: true, undef: true, unused: vars, white: true
-*/
-
 'use strict';
 
 const fetchIt = require('fetch-ponyfill')().fetch;
 
-module.exports = (fqdn, companyId) => {
+module.exports = async (fqdn, companyId) => {
 
-	let error;
+    let error;
 
-	// fetched api version url
-	return fetchIt(`https://${fqdn}/login/companyinfo/${companyId}`)
-		.then(response => {
-			if (!response.ok) {
-				error = new Error(response.statusText);
-				error.response = response;
-		  	}
-			return response.text();
-		}).then(responseText => {
+    // fetched api version url
+    const response = await fetchIt(`https://${fqdn}/login/companyinfo/${companyId}`);
 
-			let data;
-			try {
-				data = JSON.parse(responseText);
-			}catch(e) {}
+    if (!response.ok) {
+        error = new Error(response.statusText);
+        error.response = response;
+    }
+    const responseText = await response.text();
 
-			if (typeof error !== 'undefined') {
-				error.responseBody = data || responseText;
-				throw error;
-			}
+    let data;
+    try {
+        data = JSON.parse(responseText);
+    } catch (e) {}
 
-			const version = data.Codebase.replace(/\//g, '');
-			return Promise.resolve(version);
-		});
+    if (typeof error !== 'undefined') {
+        error.responseBody = data || responseText;
+        throw error;
+    }
+
+    const version = data.Codebase.replace(/\//g, '');
+    return version;
+
 };
