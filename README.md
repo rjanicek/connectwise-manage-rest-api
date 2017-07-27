@@ -32,7 +32,7 @@ const manage = require ('connectwise-manage-rest-api')({
 
 (async () => {
     const resultGraph = await manage.get(`system/info`);
-	console.log(resultGraph);
+    console.log(resultGraph);
 }).catch(error => {
     console.log(error);
 })();
