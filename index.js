@@ -30,6 +30,7 @@ module.exports = cwRestApiConfiguration => {
         let requestOptions = {
             method: options.method || 'GET',
             headers: {
+                'connection': 'keep-alive',
                 'x-forwarded-proto': 'https',
                 Authorization: AUTHORIZATION_HEADER,
                 'Content-Type': 'application/json'
