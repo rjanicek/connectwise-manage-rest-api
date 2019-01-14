@@ -37,6 +37,10 @@ module.exports = cwRestApiConfiguration => {
             }
         };
 
+        if(cwRestApiConfiguration.clientId){
+            requestOptions.headers.clientId = cwRestApiConfiguration.clientId;
+        }
+
         if (options.body) {
             requestOptions.body = options.body;
             if (typeof requestOptions.body === 'object') {
