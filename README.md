@@ -26,8 +26,9 @@ const manage = require ('connectwise-manage-rest-api')({
 	privateKey: '################',
 
 	// optional settings
-	version: 'v4_6_release',   // if ommitted, latest version will be looked up
-	timeoutRetries: 10         // number of times to retry request in case of timeout error
+    version: 'v4_6_release',                           // if omitted, latest version will be looked up
+	timeoutRetries: 10,                                // number of times to retry request in case of timeout error
+    clientId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'   // see https://developer.connectwise.com/ClientID this will eventually be a required setting
 });
 
 (async () => {

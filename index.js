@@ -6,7 +6,7 @@ const {fetch} = require('fetch-ponyfill')();
 const psaCodebaseVersion = require('./psa-codebase-version');
 
 module.exports = cwRestApiConfiguration => {
-    const AUTHORIZATION_HEADER = 'Basic ' + new Buffer(`${cwRestApiConfiguration.companyId}+${cwRestApiConfiguration.publicKey}:${cwRestApiConfiguration.privateKey}`).toString('base64');
+    const AUTHORIZATION_HEADER = 'Basic ' + Buffer.from(`${cwRestApiConfiguration.companyId}+${cwRestApiConfiguration.publicKey}:${cwRestApiConfiguration.privateKey}`).toString('base64');
     const apiUrl = version => `https://${cwRestApiConfiguration.fqdn}/${version}/apis/3.0/`;
 
     let promiseToGetApiUrl;
